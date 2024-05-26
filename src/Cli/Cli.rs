@@ -47,7 +47,7 @@ pub struct CurrentArgs {
         long,
         required = false,
         value_name = "Temperature Unit",
-        help = "Specify the units of measurement"
+        help = "Specify the units of measurement, 0--°C, 1--°F, 2--K"
     )]
     units: Option<String>,
     #[clap(short, long, help = "Display additional information")]
@@ -88,7 +88,7 @@ pub struct ForecastArgs {
         value_name = "Temperature Unit",
         help = "Specify the units of measurement"
     )]
-    unites: Option<String>,
+    units: Option<String>,
     #[clap(
         short,
         long,
@@ -99,6 +99,32 @@ pub struct ForecastArgs {
     days: Option<String>,
     #[clap(short, long, help = "Display additional information")]
     verbose: Option<String>,
+}
+
+impl ForecastArgs {
+    pub fn location(&self) -> Option<&str> {
+        if self.location.is_none() {
+            None
+        } else {
+            Some(self.location.as_ref().unwrap())
+        }
+    }
+    pub fn units(&self) -> Option<&str> {
+        if self.units.is_none() {
+            None
+        } else {
+            Some(self.units.as_ref().unwrap())
+        }
+    }
+    pub fn days(&self) -> Option<u16> {
+        if !self.days.is_none() {
+            let days_parse = self.days.as_ref().unwrap().trim().parse::<u16>();
+            if days_parse.is_ok() {
+                return Some(days_parse.unwrap());
+            }
+        }
+        None
+    }
 }
 
 #[derive(Subcommand, Debug)]

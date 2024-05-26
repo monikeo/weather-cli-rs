@@ -9,23 +9,63 @@ use weather_cli::{Api, AsciiArt, WeatherIcons};
 const API_KEY: &'static str = "e5c9e66275afa5767ef301b14caaca58";
 const API_KEY1: &'static str = "4b4cefefd96ec04cd7e24cc254f85c9e";
 
-fn CliRunTest() {
+async fn CliRunTest() {
     let args = Cli::Args::parse();
     println!("{:?}", args);
 
     if !args.location().is_none() {
         let location_city = args.location().unwrap();
         let location_city = TextMethod::convert_to_title_case(&location_city);
+        RunAppLocation(&location_city, None).await;
         println!("{}", location_city);
     } else if !args.sub_command().is_none() {
+        match args.sub_command().unwrap() {
+            Cli::SubCommands::Current(current_args) => {
+                let mut units: Option<u8> = None;
+                if !current_args.units().is_none() {
+                    let units_args = current_args.units().unwrap().trim().parse::<u8>();
+                    if units_args.is_ok() {
+                        match units_args.unwrap() {
+                            0 => {
+                                units = Some(0);
+                            }
+                            1 => {
+                                units = Some(1);
+                            }
+                            2 => {
+                                units = Some(2);
+                            }
+                            _ => {
+                                println!("Weather Units out of range (0,1,2)");
+                            }
+                        }
+                    }
+                }
+                if !current_args.location().is_none() {
+                    let city = current_args.location().unwrap();
+                    println!("current: {}", city);
+                    RunAppLocation(city, units).await;
+                }
+            }
+            Cli::SubCommands::ForecastArgs(forecast_args) => {
+                let check_city = if !forecast_args.location().is_none() {
+                    Some(forecast_args.location().unwrap())
+                } else {
+                    None
+                };
+                println!("{:?}", check_city);
+                let check_days = forecast_args.days();
+                println!("days: {:?}", check_days);
+            }
+        }
         println!("Sub Command");
     } else {
         println!(" [-] That's not a valid command - use the help command if you are stuck.");
     }
 }
 
-async fn RunApp() {
-    let city = "Phnom Penh";
+async fn RunAppLocation(city: &str, units: Option<u8>) {
+    //let city = "Phnom Penh";
     let mut weather_data = Api::OpenWeatherApiUrl::new(city, API_KEY1);
 
     //let response = fetch_weather(Api::other_api, city, "en").await;
@@ -100,6 +140,6 @@ fn print_weather_info(weather_response: &WeatherResponse, weather_data: &Api::Op
 
 #[tokio::main]
 async fn main() {
-    //RunApp().await
-    CliRunTest();
+    //RunApp("haha").await
+    CliRunTest().await;
 }
